@@ -606,7 +606,9 @@ button {
 }
 
 .story-page {
-  margin-top: 46px;
+  width: min(100%, 1320px);
+  margin: 46px auto 0;
+  overflow-x: clip;
 }
 
 .story-header {
@@ -660,13 +662,15 @@ button {
   gap: 52px;
   align-items: start;
   margin-top: 54px;
+  width: 100%;
 }
 
 .story-top-layout-single {
   grid-template-columns: 540px;
-  justify-content: start;
+  justify-content: center;
 }
 
+.story-photo-column,
 .story-detail-card {
   width: 100%;
 }
@@ -676,11 +680,16 @@ button {
   flex-direction: column;
   gap: 16px;
   padding-top: 8px;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .story-qa-compact p,
 .story-qa-long p {
   margin: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .story-qa-compact {
@@ -689,6 +698,8 @@ button {
   gap: 10px;
   font-size: clamp(1rem, 1.45vw, 1.65rem);
   line-height: 1.18;
+  width: 100%;
+  min-width: 0;
 }
 
 .story-qa-label {
@@ -700,11 +711,15 @@ button {
   flex-direction: column;
   gap: 36px;
   margin-top: 30px;
+  width: 100%;
+  min-width: 0;
 }
 
 .story-qa-long {
   font-size: clamp(1rem, 1.4vw, 1.6rem);
   line-height: 1.2;
+  width: 100%;
+  min-width: 0;
 }
 
 .story-qa-heading {
@@ -713,6 +728,8 @@ button {
 
 .story-qa-body {
   white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 @media (max-width: 1200px) {
@@ -745,6 +762,11 @@ button {
     grid-template-columns: 1fr;
     gap: 36px;
     margin-top: 56px;
+  }
+
+  .story-card-link {
+    width: min(100%, 430px);
+    margin: 0 auto;
   }
 
   .about-copy {
@@ -814,5 +836,44 @@ button {
     position: static;
     margin-bottom: 14px;
     align-self: flex-start;
+  }
+
+  .story-page {
+    width: 100%;
+    margin-top: 28px;
+  }
+
+  .story-top-layout,
+  .story-top-layout-single {
+    grid-template-columns: minmax(0, 1fr);
+    justify-content: center;
+    gap: 28px;
+    margin-top: 34px;
+  }
+
+  .story-photo-column,
+  .story-sidebar-column {
+    width: min(100%, 430px);
+    margin: 0 auto;
+  }
+
+  .story-title {
+    font-size: clamp(2.35rem, 11vw, 4rem);
+    line-height: 0.98;
+  }
+
+  .story-meta-line {
+    font-size: clamp(0.95rem, 4.3vw, 1.2rem);
+    text-align: center;
+  }
+
+  .story-body-blocks {
+    gap: 24px;
+  }
+
+  .story-qa-compact,
+  .story-qa-long {
+    font-size: clamp(1rem, 4.4vw, 1.2rem);
+    line-height: 1.3;
   }
 }
