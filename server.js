@@ -15,6 +15,7 @@ const UPLOAD_DIR = path.join(PUBLIC_DIR, "uploads");
 const STORIES_FILE = path.join(DATA_DIR, "stories.json");
 const DEFAULT_PHOTO_URL = "/assets/placeholder-photo.svg";
 const STORIES_BLOB_PATH = "stories/stories.json";
+const HOME_PAGE_SIZE = 9;
 const ATTRIBUTION_HTML =
   '<div class="site-attribution">Icons made from <a href="https://www.onlinewebfonts.com/icon" target="_blank" rel="noreferrer">svg icons</a> is licensed by CC BY 4.0</div>';
 const ABOUT_COPY =
@@ -332,21 +333,43 @@ function renderPolaroidCard({
   </article>`;
 }
 
-function renderHomePage(stories) {
+function renderStoryCardLink(story) {
+  return `<a class="story-card-link" href="/stories/${encodeURIComponent(story.id)}">
+    ${renderPolaroidCard({
+      photoUrl: story.photoUrl,
+      firstName: story.firstName,
+      lastName: story.lastName,
+      cardClass: "story-card",
+    })}
+    <p class="story-card-meta">${escapeHtml(story.interviewCity || "")}${
+      story.interviewCity && story.interviewDate ? ", " : ""
+    }${escapeHtml(story.interviewDate || "")}</p>
+  </a>`;
+}
+
+function paginateStories(stories, offset = 0, limit = HOME_PAGE_SIZE) {
+  const safeOffset = Math.max(0, Number.parseInt(String(offset), 10) || 0);
+  const safeLimit = Math.min(
+    24,
+    Math.max(1, Number.parseInt(String(limit), 10) || HOME_PAGE_SIZE)
+  );
+  const items = stories.slice(safeOffset, safeOffset + safeLimit);
+  const nextOffset = safeOffset + items.length;
+
+  return {
+    items,
+    offset: safeOffset,
+    limit: safeLimit,
+    nextOffset,
+    hasMore: nextOffset < stories.length,
+    total: stories.length,
+  };
+}
+
+function renderHomePage(page) {
+  const stories = Array.isArray(page?.items) ? page.items : [];
   const cards = stories
-    .map(
-      (story) => `<a class="story-card-link" href="/stories/${encodeURIComponent(story.id)}">
-        ${renderPolaroidCard({
-          photoUrl: story.photoUrl,
-          firstName: story.firstName,
-          lastName: story.lastName,
-          cardClass: "story-card",
-        })}
-        <p class="story-card-meta">${escapeHtml(story.interviewCity || "")}${
-          story.interviewCity && story.interviewDate ? ", " : ""
-        }${escapeHtml(story.interviewDate || "")}</p>
-      </a>`
-    )
+    .map((story) => renderStoryCardLink(story))
     .join("");
 
   return buildPage({
@@ -356,7 +379,30 @@ function renderHomePage(stories) {
       <section class="content-page content-page-home">
         <h1 class="page-title">home</h1>
       </section>
-      <section class="home-grid" aria-label="Story gallery">${cards}</section>
+      <section
+        class="home-grid"
+        aria-label="Story gallery"
+        data-home-grid="true"
+        data-page-size="${page.limit}"
+        data-next-offset="${page.nextOffset}"
+        data-has-more="${page.hasMore ? "true" : "false"}"
+      >${cards}</section>
+      ${
+        page.total === 0
+          ? '<p class="manage-empty-state home-empty-state">No stories yet.</p>'
+          : ""
+      }
+      <div class="home-pagination">
+        <button
+          class="admin-secondary-link home-load-more"
+          type="button"
+          data-home-load-more="true"
+          ${page.hasMore ? "" : "hidden"}
+        >
+          load more
+        </button>
+        <p class="save-message home-load-message" id="home-load-message" aria-live="polite"></p>
+      </div>
     </main>`,
   });
 }
@@ -674,7 +720,8 @@ app.get("/", (_req, res) => {
 });
 
 app.get("/home", async (_req, res) => {
-  res.send(renderHomePage(sortStoriesByInterviewDate(await readStories())));
+  const sortedStories = sortStoriesByInterviewDate(await readStories());
+  res.send(renderHomePage(paginateStories(sortedStories)));
 });
 
 app.get("/about", (_req, res) => {
@@ -747,8 +794,17 @@ app.get("/stories/:id", async (req, res) => {
   res.send(renderStoryPage(story));
 });
 
-app.get("/api/stories", async (_req, res) => {
-  res.json(sortStoriesByInterviewDate(await readStories()));
+app.get("/api/stories", async (req, res) => {
+  const sortedStories = sortStoriesByInterviewDate(await readStories());
+  const hasPaginationQuery =
+    req.query.offset !== undefined || req.query.limit !== undefined;
+
+  if (!hasPaginationQuery) {
+    res.json(sortedStories);
+    return;
+  }
+
+  res.json(paginateStories(sortedStories, req.query.offset, req.query.limit));
 });
 
 app.post("/api/stories", upload.single("photo"), async (req, res) => {

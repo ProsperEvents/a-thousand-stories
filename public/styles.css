@@ -201,6 +201,27 @@ button {
   margin-top: 68px;
 }
 
+.home-pagination {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin-top: 28px;
+}
+
+.home-load-more[hidden] {
+  display: none;
+}
+
+.home-load-more:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+.home-empty-state {
+  margin-top: 68px;
+}
+
 .story-card-link {
   display: block;
 }
