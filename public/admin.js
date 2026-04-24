@@ -22,6 +22,62 @@ function autoResize(textarea) {
   textarea.style.height = `${textarea.scrollHeight}px`;
 }
 
+function loadImageFromFile(file) {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    const objectUrl = URL.createObjectURL(file);
+
+    image.onload = () => {
+      URL.revokeObjectURL(objectUrl);
+      resolve(image);
+    };
+
+    image.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      reject(new Error("The selected image could not be read."));
+    };
+
+    image.src = objectUrl;
+  });
+}
+
+async function buildUploadFile(file) {
+  if (!(file instanceof File) || !file.type.startsWith("image/")) {
+    return file;
+  }
+
+  const maxDimension = 1800;
+  const quality = 0.82;
+  const image = await loadImageFromFile(file);
+  const scale = Math.min(1, maxDimension / Math.max(image.width, image.height));
+  const width = Math.max(1, Math.round(image.width * scale));
+  const height = Math.max(1, Math.round(image.height * scale));
+
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+
+  const context = canvas.getContext("2d");
+  if (!context) {
+    return file;
+  }
+
+  context.drawImage(image, 0, 0, width, height);
+
+  const blob = await new Promise((resolve) => {
+    canvas.toBlob(resolve, "image/jpeg", quality);
+  });
+
+  if (!(blob instanceof Blob) || blob.size >= file.size) {
+    return file;
+  }
+
+  return new File([blob], `${file.name.replace(/\.[^.]+$/, "") || "story-photo"}.jpg`, {
+    type: "image/jpeg",
+    lastModified: Date.now(),
+  });
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   const form = document.getElementById("story-form");
   const manageDeleteForms = Array.from(document.querySelectorAll(".manage-delete-form"));
@@ -220,6 +276,20 @@ document.addEventListener("DOMContentLoaded", () => {
     const formData = new FormData(form);
     formData.set("blocks", JSON.stringify(blocks));
 
+    const selectedPhoto = photoInput.files?.[0];
+    if (selectedPhoto) {
+      try {
+        const preparedPhoto = await buildUploadFile(selectedPhoto);
+        formData.set("photo", preparedPhoto, preparedPhoto.name);
+      } catch (_error) {
+        saveMessage.textContent = "The selected photo could not be prepared.";
+        if (submitButton instanceof HTMLButtonElement) {
+          submitButton.disabled = false;
+        }
+        return;
+      }
+    }
+
     const storyId = storyIdInput?.value.trim();
     const endpoint = storyId ? `/api/stories/${storyId}` : "/api/stories";
 
@@ -261,7 +331,10 @@ document.addEventListener("DOMContentLoaded", () => {
         submitButton.disabled = false;
       }
     } catch (error) {
-      saveMessage.textContent = "The story could not be saved.";
+      saveMessage.textContent =
+        error instanceof Error && error.message
+          ? error.message
+          : "The story could not be saved.";
       if (submitButton instanceof HTMLButtonElement) {
         submitButton.disabled = false;
       }

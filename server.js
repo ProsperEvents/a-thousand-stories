@@ -32,8 +32,20 @@ function isBlobStorageEnabled() {
   return Boolean(process.env.BLOB_READ_WRITE_TOKEN);
 }
 
+function isServerlessRuntime() {
+  return Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
+}
+
 function isAdminPasswordConfigured() {
   return Boolean(ADMIN_PASSWORD);
+}
+
+function assertWritableStoryStorage() {
+  if (!isBlobStorageEnabled() && isServerlessRuntime()) {
+    throw new Error(
+      "Story storage is not configured. Add BLOB_READ_WRITE_TOKEN to the Vercel Production environment and redeploy."
+    );
+  }
 }
 
 function readLocalStories() {
@@ -73,6 +85,8 @@ async function readStories() {
 }
 
 async function writeStories(stories) {
+  assertWritableStoryStorage();
+
   if (isBlobStorageEnabled()) {
     await put(STORIES_BLOB_PATH, JSON.stringify(stories, null, 2), {
       access: "public",
@@ -205,6 +219,8 @@ async function storeUploadedPhoto(file) {
   if (!file) {
     return DEFAULT_PHOTO_URL;
   }
+
+  assertWritableStoryStorage();
 
   const filename = buildUploadFilename(file);
 
@@ -799,7 +815,12 @@ app.post("/api/stories", upload.single("photo"), async (req, res) => {
     });
   } catch (error) {
     console.error("Unable to save new story:", error);
-    res.status(500).json({ error: "The story could not be saved." });
+    res.status(500).json({
+      error:
+        error instanceof Error && error.message
+          ? error.message
+          : "The story could not be saved.",
+    });
   }
 });
 
@@ -877,7 +898,12 @@ app.post("/api/stories/:id", upload.single("photo"), async (req, res) => {
     });
   } catch (error) {
     console.error(`Unable to update story ${req.params.id}:`, error);
-    res.status(500).json({ error: "The story could not be saved." });
+    res.status(500).json({
+      error:
+        error instanceof Error && error.message
+          ? error.message
+          : "The story could not be saved.",
+    });
   }
 });
 
@@ -922,7 +948,12 @@ app.post("/admin/stories/:id/delete", async (req, res) => {
     console.error(`Unable to delete story ${req.params.id}:`, error);
 
     if (expectsJson) {
-      res.status(500).json({ error: "The story could not be deleted." });
+      res.status(500).json({
+        error:
+          error instanceof Error && error.message
+            ? error.message
+            : "The story could not be deleted.",
+      });
       return;
     }
 
