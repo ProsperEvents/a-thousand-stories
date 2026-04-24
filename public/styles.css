@@ -192,6 +192,7 @@ button {
   font-size: clamp(1.7rem, 2.5vw, 3.1rem);
   line-height: 1.28;
   text-align: center;
+  white-space: pre-line;
 }
 
 .home-grid {
