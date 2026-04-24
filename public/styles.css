@@ -620,14 +620,16 @@ button {
 
 .story-back-link {
   position: absolute;
-  left: -28px;
-  top: -22px;
+  left: 0;
+  top: -10px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
+  width: 34px;
+  height: 34px;
   line-height: 1;
+  color: rgba(0, 0, 0, 0.82);
+  z-index: 4;
 }
 
 .story-back-icon {
