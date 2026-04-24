@@ -92,7 +92,7 @@ async function writeStories(stories) {
       access: "public",
       contentType: "application/json",
       addRandomSuffix: false,
-      overwrite: true,
+      allowOverwrite: true,
     });
     return;
   }
@@ -228,7 +228,7 @@ async function storeUploadedPhoto(file) {
     const blob = await put(`uploads/${filename}`, file.buffer, {
       access: "public",
       addRandomSuffix: false,
-      overwrite: true,
+      allowOverwrite: true,
       contentType: file.mimetype || "application/octet-stream",
     });
     return blob.url;
