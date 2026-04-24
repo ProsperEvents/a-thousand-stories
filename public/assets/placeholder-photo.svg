@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000" role="img" aria-labelledby="title desc">
+  <title id="title">Photo uploaded by admin placeholder</title>
+  <desc id="desc">A black square with centered white text saying photo uploaded by admin.</desc>
+  <rect width="1000" height="1000" fill="#050505" />
+  <text
+    x="500"
+    y="380"
+    fill="#ffffff"
+    font-family="Arial Rounded MT Bold, Arial, sans-serif"
+    font-size="110"
+    text-anchor="middle"
+  >
+    photo
+  </text>
+  <text
+    x="500"
+    y="515"
+    fill="#ffffff"
+    font-family="Arial Rounded MT Bold, Arial, sans-serif"
+    font-size="110"
+    text-anchor="middle"
+  >
+    uploaded
+  </text>
+  <text
+    x="500"
+    y="650"
+    fill="#ffffff"
+    font-family="Arial Rounded MT Bold, Arial, sans-serif"
+    font-size="110"
+    text-anchor="middle"
+  >
+    by admin
+  </text>
+</svg>

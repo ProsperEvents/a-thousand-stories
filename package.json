@@ -1,0 +1,19 @@
+{
+  "name": "athousandstories",
+  "version": "1.0.0",
+  "description": "A story-driven website for a thousand stories.",
+  "main": "server.js",
+  "scripts": {
+    "dev": "node server.js",
+    "start": "node server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@vercel/blob": "^2.3.3",
+    "express": "^5.2.1",
+    "multer": "^2.1.1"
+  }
+}
