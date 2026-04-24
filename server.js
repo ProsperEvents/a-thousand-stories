@@ -69,6 +69,10 @@ function readLocalStories() {
   }
 }
 
+function getStoryReadFallback() {
+  return isServerlessRuntime() ? [] : readLocalStories();
+}
+
 async function readStories() {
   if (!isBlobStorageEnabled()) {
     return readLocalStories();
@@ -80,18 +84,20 @@ async function readStories() {
       blobs.find((blob) => blob.pathname === STORIES_BLOB_PATH) || blobs[0];
 
     if (!storyBlob) {
-      return readLocalStories();
+      return getStoryReadFallback();
     }
 
     const response = await fetch(storyBlob.url, { cache: "no-store" });
     if (!response.ok) {
-      return readLocalStories();
+      console.error("Unable to fetch stories blob:", response.status, response.statusText);
+      return getStoryReadFallback();
     }
 
     const stories = await response.json();
     return Array.isArray(stories) ? stories : [];
   } catch (error) {
-    return readLocalStories();
+    console.error("Unable to read stories from storage:", error);
+    return getStoryReadFallback();
   }
 }
 
