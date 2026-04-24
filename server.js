@@ -736,139 +736,149 @@ app.get("/api/stories", async (_req, res) => {
 });
 
 app.post("/api/stories", upload.single("photo"), async (req, res) => {
-  if (!isAdminAuthenticated(req)) {
-    res.status(401).json({ error: "You must sign in as admin first." });
-    return;
-  }
-
-  const firstName = String(req.body.firstName || "").trim();
-  const lastName = String(req.body.lastName || "").trim();
-  const country = String(req.body.country || "").trim();
-  const interviewCity = String(req.body.interviewCity || "").trim();
-  const interviewDate = String(req.body.interviewDate || "").trim();
-
-  let blocks = [];
   try {
-    blocks = JSON.parse(String(req.body.blocks || "[]"));
+    if (!isAdminAuthenticated(req)) {
+      res.status(401).json({ error: "You must sign in as admin first." });
+      return;
+    }
+
+    const firstName = String(req.body.firstName || "").trim();
+    const lastName = String(req.body.lastName || "").trim();
+    const country = String(req.body.country || "").trim();
+    const interviewCity = String(req.body.interviewCity || "").trim();
+    const interviewDate = String(req.body.interviewDate || "").trim();
+
+    let blocks = [];
+    try {
+      blocks = JSON.parse(String(req.body.blocks || "[]"));
+    } catch (error) {
+      blocks = [];
+    }
+
+    const normalizedBlocks = blocks
+      .map((block) => ({
+        question: String(block.question || "").trim(),
+        answer: String(block.answer || "").trim(),
+      }))
+      .filter((block) => block.question || block.answer);
+
+    if (!firstName || !lastName || !country || !interviewCity || !interviewDate) {
+      res.status(400).json({ error: "Please fill out every story detail." });
+      return;
+    }
+
+    if (!isValidInterviewDateFormat(interviewDate)) {
+      res
+        .status(400)
+        .json({ error: "Please enter the interview date as dd/mm/yyyy." });
+      return;
+    }
+
+    const photoUrl = req.file
+      ? await storeUploadedPhoto(req.file)
+      : DEFAULT_PHOTO_URL;
+
+    const story = {
+      id: createStoryId(firstName, lastName),
+      firstName,
+      lastName,
+      country,
+      interviewCity,
+      interviewDate,
+      photoUrl,
+      blocks: normalizedBlocks,
+    };
+
+    const stories = await readStories();
+    stories.unshift(story);
+    await writeStories(stories);
+
+    res.status(201).json({
+      ok: true,
+      storyUrl: `/stories/${story.id}`,
+    });
   } catch (error) {
-    blocks = [];
+    console.error("Unable to save new story:", error);
+    res.status(500).json({ error: "The story could not be saved." });
   }
-
-  const normalizedBlocks = blocks
-    .map((block) => ({
-      question: String(block.question || "").trim(),
-      answer: String(block.answer || "").trim(),
-    }))
-    .filter((block) => block.question || block.answer);
-
-  if (!firstName || !lastName || !country || !interviewCity || !interviewDate) {
-    res.status(400).json({ error: "Please fill out every story detail." });
-    return;
-  }
-
-  if (!isValidInterviewDateFormat(interviewDate)) {
-    res
-      .status(400)
-      .json({ error: "Please enter the interview date as dd/mm/yyyy." });
-    return;
-  }
-
-  const photoUrl = req.file
-    ? await storeUploadedPhoto(req.file)
-    : DEFAULT_PHOTO_URL;
-
-  const story = {
-    id: createStoryId(firstName, lastName),
-    firstName,
-    lastName,
-    country,
-    interviewCity,
-    interviewDate,
-    photoUrl,
-    blocks: normalizedBlocks,
-  };
-
-  const stories = await readStories();
-  stories.unshift(story);
-  await writeStories(stories);
-
-  res.status(201).json({
-    ok: true,
-    storyUrl: `/stories/${story.id}`,
-  });
 });
 
 app.post("/api/stories/:id", upload.single("photo"), async (req, res) => {
-  if (!isAdminAuthenticated(req)) {
-    res.status(401).json({ error: "You must sign in as admin first." });
-    return;
-  }
-
-  const stories = await readStories();
-  const existingStory = findStoryById(stories, req.params.id);
-
-  if (!existingStory) {
-    res.status(404).json({ error: "Story not found." });
-    return;
-  }
-
-  const firstName = String(req.body.firstName || "").trim();
-  const lastName = String(req.body.lastName || "").trim();
-  const country = String(req.body.country || "").trim();
-  const interviewCity = String(req.body.interviewCity || "").trim();
-  const interviewDate = String(req.body.interviewDate || "").trim();
-
-  let blocks = [];
   try {
-    blocks = JSON.parse(String(req.body.blocks || "[]"));
+    if (!isAdminAuthenticated(req)) {
+      res.status(401).json({ error: "You must sign in as admin first." });
+      return;
+    }
+
+    const stories = await readStories();
+    const existingStory = findStoryById(stories, req.params.id);
+
+    if (!existingStory) {
+      res.status(404).json({ error: "Story not found." });
+      return;
+    }
+
+    const firstName = String(req.body.firstName || "").trim();
+    const lastName = String(req.body.lastName || "").trim();
+    const country = String(req.body.country || "").trim();
+    const interviewCity = String(req.body.interviewCity || "").trim();
+    const interviewDate = String(req.body.interviewDate || "").trim();
+
+    let blocks = [];
+    try {
+      blocks = JSON.parse(String(req.body.blocks || "[]"));
+    } catch (error) {
+      blocks = [];
+    }
+
+    const normalizedBlocks = blocks
+      .map((block) => ({
+        question: String(block.question || "").trim(),
+        answer: String(block.answer || "").trim(),
+      }))
+      .filter((block) => block.question || block.answer);
+
+    if (!firstName || !lastName || !country || !interviewCity || !interviewDate) {
+      res.status(400).json({ error: "Please fill out every story detail." });
+      return;
+    }
+
+    if (!isValidInterviewDateFormat(interviewDate)) {
+      res
+        .status(400)
+        .json({ error: "Please enter the interview date as dd/mm/yyyy." });
+      return;
+    }
+
+    let nextPhotoUrl = existingStory.photoUrl || DEFAULT_PHOTO_URL;
+    if (req.file) {
+      nextPhotoUrl = await storeUploadedPhoto(req.file);
+      await deleteStoredPhoto(existingStory.photoUrl);
+    }
+
+    const updatedStory = {
+      ...existingStory,
+      firstName,
+      lastName,
+      country,
+      interviewCity,
+      interviewDate,
+      photoUrl: nextPhotoUrl,
+      blocks: normalizedBlocks,
+    };
+
+    await writeStories(
+      stories.map((story) => (story.id === existingStory.id ? updatedStory : story))
+    );
+
+    res.json({
+      ok: true,
+      storyUrl: `/stories/${updatedStory.id}`,
+    });
   } catch (error) {
-    blocks = [];
+    console.error(`Unable to update story ${req.params.id}:`, error);
+    res.status(500).json({ error: "The story could not be saved." });
   }
-
-  const normalizedBlocks = blocks
-    .map((block) => ({
-      question: String(block.question || "").trim(),
-      answer: String(block.answer || "").trim(),
-    }))
-    .filter((block) => block.question || block.answer);
-
-  if (!firstName || !lastName || !country || !interviewCity || !interviewDate) {
-    res.status(400).json({ error: "Please fill out every story detail." });
-    return;
-  }
-
-  if (!isValidInterviewDateFormat(interviewDate)) {
-    res
-      .status(400)
-      .json({ error: "Please enter the interview date as dd/mm/yyyy." });
-    return;
-  }
-
-  let nextPhotoUrl = existingStory.photoUrl || DEFAULT_PHOTO_URL;
-  if (req.file) {
-    nextPhotoUrl = await storeUploadedPhoto(req.file);
-    await deleteStoredPhoto(existingStory.photoUrl);
-  }
-
-  const updatedStory = {
-    ...existingStory,
-    firstName,
-    lastName,
-    country,
-    interviewCity,
-    interviewDate,
-    photoUrl: nextPhotoUrl,
-    blocks: normalizedBlocks,
-  };
-
-  await writeStories(
-    stories.map((story) => (story.id === existingStory.id ? updatedStory : story))
-  );
-
-  res.json({
-    ok: true,
-    storyUrl: `/stories/${updatedStory.id}`,
-  });
 });
 
 app.post("/admin/stories/:id/delete", async (req, res) => {

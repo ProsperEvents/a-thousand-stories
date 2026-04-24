@@ -203,6 +203,11 @@ document.addEventListener("DOMContentLoaded", () => {
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
     saveMessage.textContent = "saving...";
+    const submitButton = form.querySelector('.save-button');
+
+    if (submitButton instanceof HTMLButtonElement) {
+      submitButton.disabled = true;
+    }
 
     const blocks = Array.from(blocksContainer.querySelectorAll(".story-block-editor")).map(
       (block) => ({
@@ -221,18 +226,45 @@ document.addEventListener("DOMContentLoaded", () => {
     try {
       const response = await fetch(endpoint, {
         method: "POST",
+        credentials: "same-origin",
+        headers: {
+          Accept: "application/json",
+          "X-Requested-With": "fetch",
+        },
         body: formData,
       });
-      const payload = await response.json();
+      const contentType = response.headers.get("content-type") || "";
+      const payload = contentType.includes("application/json")
+        ? await response.json()
+        : null;
 
       if (!response.ok) {
-        saveMessage.textContent = payload.error || "The story could not be saved.";
+        if (response.status === 413) {
+          saveMessage.textContent = "The uploaded photo is too large.";
+        } else {
+          saveMessage.textContent =
+            payload?.error || `The story could not be saved (${response.status}).`;
+        }
+        if (submitButton instanceof HTMLButtonElement) {
+          submitButton.disabled = false;
+        }
         return;
       }
 
-      window.location.href = payload.storyUrl;
+      if (payload?.storyUrl) {
+        window.location.href = payload.storyUrl;
+        return;
+      }
+
+      saveMessage.textContent = "The story was saved, but the page could not open.";
+      if (submitButton instanceof HTMLButtonElement) {
+        submitButton.disabled = false;
+      }
     } catch (error) {
       saveMessage.textContent = "The story could not be saved.";
+      if (submitButton instanceof HTMLButtonElement) {
+        submitButton.disabled = false;
+      }
     }
   });
 });
