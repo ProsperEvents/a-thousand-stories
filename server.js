@@ -647,7 +647,9 @@ function renderStoryPage(story) {
       ${renderHeader()}
       <article class="story-page">
         <header class="story-header">
-          <a class="story-back-link" href="/home" data-back-link="true" aria-label="Go back">←</a>
+          <a class="story-back-link" href="/home" data-back-link="true" aria-label="Go back">
+            <span class="story-back-icon" aria-hidden="true"></span>
+          </a>
           <div class="story-title-row">
             <h1 class="story-title">${escapeHtml(story.firstName)} ${escapeHtml(story.lastName)}</h1>
           </div>

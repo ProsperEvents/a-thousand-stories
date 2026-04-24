@@ -622,8 +622,22 @@ button {
   position: absolute;
   left: -28px;
   top: -22px;
-  font-size: clamp(1.45rem, 2.1vw, 2.2rem);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
   line-height: 1;
+}
+
+.story-back-icon {
+  display: block;
+  width: 13px;
+  height: 13px;
+  border-left: 3px solid currentColor;
+  border-bottom: 3px solid currentColor;
+  transform: rotate(45deg);
+  transform-origin: center;
 }
 
 .story-title-row {
