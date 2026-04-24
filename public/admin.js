@@ -1,11 +1,11 @@
 const DEFAULT_STORY_QUESTIONS = [
-  "What is your full name, age, and city of residence.",
+  "What is your full name, age, and city of residence?",
   "Tell me the story of how exactly you ended up here today. Where you were born, where you grew up, moved to, who was involved in your story, your path to this exact moment.",
   "What is your greatest accomplishment?",
   "What is your greatest regret?",
   "What is your favourite thing about yourself?",
   "What is your dream?",
-  "What is our best piece of advice?",
+  "What is your best piece of advice?",
 ];
 
 function createBlockEditor(block = {}) {
