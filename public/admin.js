@@ -1,3 +1,13 @@
+const DEFAULT_STORY_QUESTIONS = [
+  "What is your full name, age, and city of residence.",
+  "Tell me the story of how exactly you ended up here today. Where you were born, where you grew up, moved to, who was involved in your story, your path to this exact moment.",
+  "What is your greatest accomplishment?",
+  "What is your greatest regret?",
+  "What is your favourite thing about yourself?",
+  "What is your dream?",
+  "What is our best piece of advice?",
+];
+
 function createBlockEditor(block = {}) {
   const wrapper = document.createElement("div");
   wrapper.className = "story-block-editor";
@@ -5,15 +15,36 @@ function createBlockEditor(block = {}) {
     <div class="story-block-fields">
       <label class="story-block-field">
         <span class="story-block-label">Question:</span>
-        <textarea class="story-block-input" rows="1" data-field="question" placeholder="Allow the signed in admin user to add their question">${block.question || ""}</textarea>
+        <textarea class="story-block-input" rows="1" data-field="question" placeholder="Allow the signed in admin user to add their question"></textarea>
       </label>
       <label class="story-block-field">
         <span class="story-block-label">Answer:</span>
-        <textarea class="story-block-input" rows="1" data-field="answer" placeholder="Allow the signed in admin user to add their answer">${block.answer || ""}</textarea>
+        <textarea class="story-block-input" rows="1" data-field="answer" placeholder="Allow the signed in admin user to add their answer"></textarea>
       </label>
     </div>
     <button class="story-block-delete" type="button" aria-label="Delete text block">x</button>
   `;
+
+  const questionField = wrapper.querySelector('[data-field="question"]');
+  const answerField = wrapper.querySelector('[data-field="answer"]');
+  const deleteButton = wrapper.querySelector(".story-block-delete");
+
+  if (questionField instanceof HTMLTextAreaElement) {
+    questionField.value = block.question || "";
+    if (block.lockQuestion) {
+      questionField.readOnly = true;
+      questionField.setAttribute("aria-readonly", "true");
+    }
+  }
+
+  if (answerField instanceof HTMLTextAreaElement) {
+    answerField.value = block.answer || "";
+  }
+
+  if (block.lockQuestion && deleteButton instanceof HTMLButtonElement) {
+    deleteButton.hidden = true;
+  }
+
   return wrapper;
 }
 
@@ -75,6 +106,22 @@ async function buildUploadFile(file) {
   return new File([blob], `${file.name.replace(/\.[^.]+$/, "") || "story-photo"}.jpg`, {
     type: "image/jpeg",
     lastModified: Date.now(),
+  });
+}
+
+function buildDefaultQuestionBlocks() {
+  return DEFAULT_STORY_QUESTIONS.map((question) => ({
+    question,
+    answer: "",
+    lockQuestion: true,
+  }));
+}
+
+function appendBlockEditors(blocksContainer, blocks) {
+  blocks.forEach((block) => {
+    const editor = createBlockEditor(block);
+    blocksContainer.appendChild(editor);
+    editor.querySelectorAll("textarea").forEach(autoResize);
   });
 }
 
@@ -220,12 +267,16 @@ document.addEventListener("DOMContentLoaded", () => {
     refreshPreviewName();
 
     if (Array.isArray(initialStory.blocks)) {
-      initialStory.blocks.forEach((block) => {
-        const editor = createBlockEditor(block);
-        blocksContainer.appendChild(editor);
-        editor.querySelectorAll("textarea").forEach(autoResize);
-      });
+      appendBlockEditors(
+        blocksContainer,
+        initialStory.blocks.map((block) => ({
+          ...block,
+          lockQuestion: DEFAULT_STORY_QUESTIONS.includes(String(block.question || "").trim()),
+        }))
+      );
     }
+  } else {
+    appendBlockEditors(blocksContainer, buildDefaultQuestionBlocks());
   }
 
   interviewDateInput?.addEventListener("input", () => {
