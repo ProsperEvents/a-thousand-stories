@@ -24,6 +24,10 @@ function autoResize(textarea) {
 
 document.addEventListener("DOMContentLoaded", () => {
   const form = document.getElementById("story-form");
+  const manageDeleteForms = Array.from(document.querySelectorAll(".manage-delete-form"));
+  const manageList = document.querySelector(".manage-story-list");
+  const manageMessage = document.getElementById("manage-message");
+  const manageEmptyState = document.querySelector(".manage-empty-state");
   const blocksContainer = document.getElementById("story-blocks");
   const addBlockButton = document.getElementById("add-block");
   const saveMessage = document.getElementById("save-message");
@@ -40,6 +44,82 @@ document.addEventListener("DOMContentLoaded", () => {
   const initialStory = initialStoryElement?.textContent
     ? JSON.parse(initialStoryElement.textContent)
     : null;
+
+  if (manageDeleteForms.length > 0) {
+    manageDeleteForms.forEach((deleteForm) => {
+      deleteForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+
+        if (!window.confirm("Delete this story?")) {
+          return;
+        }
+
+        const card = deleteForm.closest("[data-story-card]");
+        const submitButton = deleteForm.querySelector('button[type="submit"]');
+
+        if (submitButton instanceof HTMLButtonElement) {
+          submitButton.disabled = true;
+        }
+
+        if (manageMessage) {
+          manageMessage.textContent = "deleting...";
+        }
+
+        try {
+          const response = await fetch(deleteForm.action, {
+            method: "POST",
+            headers: {
+              Accept: "application/json",
+              "X-Requested-With": "fetch",
+            },
+          });
+          const payload = await response.json();
+
+          if (!response.ok) {
+            if (manageMessage) {
+              manageMessage.textContent =
+                payload.error || "The story could not be deleted.";
+            }
+
+            if (submitButton instanceof HTMLButtonElement) {
+              submitButton.disabled = false;
+            }
+            return;
+          }
+
+          card?.remove();
+
+          if (manageList && !manageList.querySelector("[data-story-card]")) {
+            manageList.remove();
+            if (manageEmptyState instanceof HTMLElement) {
+              manageEmptyState.hidden = false;
+            } else if (manageMessage) {
+              const empty = document.createElement("p");
+              empty.className = "manage-empty-state";
+              empty.textContent = "No stories yet.";
+              manageMessage.insertAdjacentElement("beforebegin", empty);
+            }
+          }
+
+          if (manageMessage) {
+            manageMessage.textContent = "";
+          }
+        } catch (_error) {
+          if (manageMessage) {
+            manageMessage.textContent = "The story could not be deleted.";
+          }
+
+          if (submitButton instanceof HTMLButtonElement) {
+            submitButton.disabled = false;
+          }
+        }
+      });
+    });
+  }
+
+  if (!(form instanceof HTMLFormElement)) {
+    return;
+  }
 
   blocksContainer.querySelectorAll("textarea").forEach(autoResize);
 

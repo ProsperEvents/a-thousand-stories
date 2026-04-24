@@ -483,7 +483,7 @@ function renderAdminCreationPage(initialStory = null) {
 function renderAdminManagePage(stories) {
   const items = sortStoriesByInterviewDate(stories)
     .map(
-      (story) => `<article class="manage-story-card">
+      (story) => `<article class="manage-story-card" data-story-card="${escapeHtml(story.id)}">
         <div class="manage-story-copy">
           <h2 class="manage-story-name">${escapeHtml(story.firstName)} ${escapeHtml(
             story.lastName
@@ -495,9 +495,9 @@ function renderAdminManagePage(stories) {
         <div class="manage-story-actions">
           <a class="admin-secondary-link" href="/stories/${encodeURIComponent(story.id)}">view</a>
           <a class="admin-secondary-link" href="/admin/edit/${encodeURIComponent(story.id)}">edit</a>
-          <form action="/admin/stories/${encodeURIComponent(
+          <form class="manage-delete-form" action="/admin/stories/${encodeURIComponent(
             story.id
-          )}/delete" method="post" onsubmit="return confirm('Delete this story?');">
+          )}/delete" method="post">
             <button class="admin-secondary-link admin-secondary-link-danger" type="submit">delete</button>
           </form>
         </div>
@@ -507,6 +507,7 @@ function renderAdminManagePage(stories) {
 
   return buildPage({
     pageClass: "site-page-body",
+    scriptPath: "/admin.js",
     body: `<main class="page-shell">
       ${renderHeader()}
       <section class="content-page content-page-home">
@@ -521,6 +522,7 @@ function renderAdminManagePage(stories) {
             ? `<div class="manage-story-list">${items}</div>`
             : '<p class="manage-empty-state">No stories yet.</p>'
         }
+        <p id="manage-message" class="save-message manage-message" aria-live="polite"></p>
       </section>
     </main>`,
   });
@@ -870,7 +872,16 @@ app.post("/api/stories/:id", upload.single("photo"), async (req, res) => {
 });
 
 app.post("/admin/stories/:id/delete", async (req, res) => {
+  const expectsJson =
+    req.get("x-requested-with") === "fetch" ||
+    req.get("accept")?.includes("application/json");
+
   if (!isAdminAuthenticated(req)) {
+    if (expectsJson) {
+      res.status(401).json({ error: "You must sign in as admin first." });
+      return;
+    }
+
     res.redirect("/admin");
     return;
   }
@@ -879,6 +890,11 @@ app.post("/admin/stories/:id/delete", async (req, res) => {
     const stories = await readStories();
     const story = findStoryById(stories, req.params.id);
     if (!story) {
+      if (expectsJson) {
+        res.status(404).json({ error: "Story not found." });
+        return;
+      }
+
       res.redirect("/admin/manage");
       return;
     }
@@ -886,9 +902,20 @@ app.post("/admin/stories/:id/delete", async (req, res) => {
     await writeStories(stories.filter((entry) => entry.id !== story.id));
     await deleteStoredPhoto(story.photoUrl);
 
+    if (expectsJson) {
+      res.json({ ok: true, deletedId: story.id });
+      return;
+    }
+
     res.redirect("/admin/manage");
   } catch (error) {
     console.error(`Unable to delete story ${req.params.id}:`, error);
+
+    if (expectsJson) {
+      res.status(500).json({ error: "The story could not be deleted." });
+      return;
+    }
+
     res.redirect("/admin/manage");
   }
 });
