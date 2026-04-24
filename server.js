@@ -18,19 +18,18 @@ const STORIES_BLOB_PATH = "stories/stories.json";
 const HOME_PAGE_SIZE = 9;
 const ATTRIBUTION_HTML =
   '<div class="site-attribution">Icons made from <a href="https://www.onlinewebfonts.com/icon" target="_blank" rel="noreferrer">svg icons</a> is licensed by CC BY 4.0</div>';
+const ABOUT_EMAIL = "hello@athousandstories.net";
 const ABOUT_COPY =
   `The goal of "a thousand stories" is exactly as the name implies. To collect the stories of a thousand people from all different places, all with different experiences, and different lives. In this ever changing world where we feel so divided, overwhelmed and sometimes a little lost it can be good to take a step back to reflect on others, and ourselves. In all this, we find that one thing unites us all. Regardless of age, country, religion, language, sex, wealth or other we are all human. Take this time to think about your story.
 
 Every story follows the same seven questions.
-1. What is your full name, age, and city of residence.
+1. What is your full name, age, and city of residence?
 2. Tell me the story of how exactly you ended up here today. Where you were born, where you grew up, moved to, who was involved in your story, your path to this exact moment.
 3. What is your greatest accomplishment?
 4. What is your greatest regret?
 5. What is your favourite thing about yourself?
 6. What is your dream?
-7. What is our best piece of advice?
-
-hello@athousandstories.net`;
+7. What is your best piece of advice?`;
 
 function ensureProjectFiles() {
   fs.mkdirSync(DATA_DIR, { recursive: true });
@@ -425,7 +424,11 @@ function renderAboutPage() {
       ${renderHeader()}
       <section class="content-page content-page-about">
         <h1 class="page-title">about</h1>
-        <p class="about-copy">${escapeHtml(ABOUT_COPY)}</p>
+        <p class="about-copy">${escapeHtml(ABOUT_COPY)}
+
+<a class="about-email" href="mailto:${escapeHtml(ABOUT_EMAIL)}">${escapeHtml(
+      ABOUT_EMAIL
+    )}</a></p>
       </section>
     </main>`,
   });
