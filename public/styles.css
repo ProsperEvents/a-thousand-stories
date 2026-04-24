@@ -670,9 +670,20 @@ button {
   justify-content: center;
 }
 
+.story-top-layout.story-top-layout-stacked {
+  grid-template-columns: minmax(0, 1fr);
+  justify-content: center;
+  gap: 28px;
+}
+
 .story-photo-column,
 .story-detail-card {
   width: 100%;
+}
+
+.story-top-layout.story-top-layout-stacked .story-photo-column {
+  width: min(100%, 540px);
+  margin: 0 auto;
 }
 
 .story-sidebar-column {
@@ -682,6 +693,12 @@ button {
   padding-top: 8px;
   min-width: 0;
   max-width: 100%;
+}
+
+.story-top-layout.story-top-layout-stacked .story-sidebar-column {
+  width: min(100%, 980px);
+  margin: 0 auto;
+  padding-top: 0;
 }
 
 .story-qa-compact p,

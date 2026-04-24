@@ -657,13 +657,13 @@ function renderStoryPage(story) {
           </div>
         </header>
 
-        <section class="story-top-layout${topBlocks ? "" : " story-top-layout-single"}">
-          <div class="story-photo-column">
+        <section class="story-top-layout${topBlocks ? "" : " story-top-layout-single"}" data-story-top-layout="true">
+          <div class="story-photo-column" data-story-photo-column="true">
             ${renderStoryCard(story)}
           </div>
           ${
             topBlocks
-              ? `<div class="story-sidebar-column">
+              ? `<div class="story-sidebar-column" data-story-sidebar-column="true">
             ${topBlocks}
           </div>`
               : ""

@@ -1,6 +1,31 @@
 document.addEventListener("DOMContentLoaded", () => {
   const prefetchedUrls = new Set();
 
+  function syncStoryTopLayout() {
+    const topLayout = document.querySelector('[data-story-top-layout="true"]');
+    const photoColumn = document.querySelector('[data-story-photo-column="true"]');
+    const sidebarColumn = document.querySelector('[data-story-sidebar-column="true"]');
+
+    if (
+      !(topLayout instanceof HTMLElement) ||
+      !(photoColumn instanceof HTMLElement) ||
+      !(sidebarColumn instanceof HTMLElement)
+    ) {
+      return;
+    }
+
+    if (window.innerWidth <= 1200) {
+      topLayout.classList.remove("story-top-layout-stacked");
+      return;
+    }
+
+    const photoHeight = photoColumn.offsetHeight;
+    const sidebarHeight = sidebarColumn.scrollHeight;
+    const shouldStack = sidebarHeight > photoHeight - 20;
+
+    topLayout.classList.toggle("story-top-layout-stacked", shouldStack);
+  }
+
   function attachPrefetchListeners(link) {
     if (!(link instanceof HTMLAnchorElement)) {
       return;
@@ -162,6 +187,9 @@ document.addEventListener("DOMContentLoaded", () => {
   } else {
     window.setTimeout(warmLikelyNextPages, 600);
   }
+
+  syncStoryTopLayout();
+  window.addEventListener("resize", syncStoryTopLayout);
 
   const loadMoreButton = document.querySelector('[data-home-load-more="true"]');
   if (loadMoreButton instanceof HTMLButtonElement) {
